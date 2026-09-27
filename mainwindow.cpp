@@ -415,7 +415,8 @@ QWidget *MainWindow::makeDonut(const QString &title, std::function<DonutValue()>
     chart->legend()->setVisible(false);
     chart->setTitle(title);
     chart->setTitleFont(titleFont);
-    chart->setTitleBrush(QColor(255, 255, 255));
+    // Цвет из темы, а не жёстко белый: на светлой теме белый текст пропадает.
+    chart->setTitleBrush(palette().color(QPalette::WindowText));
     chart->setBackgroundVisible(false);
 
     QChartView *chartView = new QChartView(chart);
@@ -425,7 +426,7 @@ QWidget *MainWindow::makeDonut(const QString &title, std::function<DonutValue()>
     QLabel *centerLabel = new QLabel(initial.text);
     centerLabel->setAlignment(Qt::AlignCenter);
     registerValueLabel(centerLabel, QString::fromLatin1(kDonutBaseStyle), parameterId,
-                       QColor(Qt::white));
+                       palette().color(QPalette::WindowText));
 
     QWidget *container = new QWidget();
     QStackedLayout *stack = new QStackedLayout(container);
@@ -786,7 +787,51 @@ void MainWindow::updateViews()
         ++index;
         if (axisXt)
             axisXt->setRange(qMax(0, index - 20), qMax(20, index));
+        rescaleTemperatureAxis();
     }
+}
+
+void MainWindow::rescaleTemperatureAxis()
+{
+    // Фиксированный диапазон прятал бы данные за краем графика: при перегреве
+    // панели уходят за 100 °C, в тени опускаются ниже нуля. Поэтому ось
+    // подстраивается под то, что реально видно на экране.
+    if (!axisYt || solartemp.isEmpty())
+        return;
+
+    bool haveAny = false;
+    double lowest = 0.0;
+    double highest = 0.0;
+
+    for (const QLineSeries *series : solartemp) {
+        for (const QPointF &point : series->points()) {
+            if (!haveAny) {
+                lowest = highest = point.y();
+                haveAny = true;
+            } else {
+                lowest = qMin(lowest, point.y());
+                highest = qMax(highest, point.y());
+            }
+        }
+    }
+    if (!haveAny)
+        return;
+
+    // Округляем наружу до десятков: иначе ось дёргалась бы на каждом кадре
+    // вслед за шумом измерений.
+    constexpr double step = 10.0;
+    double low  = std::floor(lowest / step) * step - step;
+    double high = std::ceil(highest / step) * step + step;
+
+    // Не даём шкале схлопнуться, когда все панели одной температуры.
+    constexpr double minimumSpan = 40.0;
+    if (high - low < minimumSpan)
+        high = low + minimumSpan;
+
+    // Меняем диапазон, только если он действительно другой: лишний setRange
+    // заставляет график перерисовываться целиком.
+    if (qAbs(low - axisYt->min()) > 0.5 || qAbs(high - axisYt->max()) > 0.5)
+        axisYt->setRange(low, high);
 }
 
 void MainWindow::applyVisuals()

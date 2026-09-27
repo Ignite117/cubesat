@@ -61,6 +61,10 @@ APID_HOUSEKEEPING = 0x064
 SEQ_MASK = 0x3FFF
 DEFAULT_PORT = 5005
 
+# Предельный ток заряда батареи, А. Задан контроллером заряда и держится
+# внутри границы нормы из limitcheck.cpp (предупреждение при 1.0 А).
+MAX_CHARGE_CURRENT = 0.8
+
 # Порядок полей payload. Должен строка в строку соответствовать
 # writePayload()/readPayload() в protocol.h.
 PAYLOAD_FORMAT = (
@@ -171,6 +175,13 @@ class Spacecraft:
         generated = sum(solar_power)
         consumed = 4.2
         battery_current = (generated - consumed) / 7.4  # A, отрицательный = разряд
+
+        # Контроллер заряда ограничивает ток в батарею: на пике освещённости
+        # панели дают больше, чем батарея способна принять, и избыток просто
+        # не отбирается. Без этого ток доходил бы до 2 А и постоянно выбивал
+        # границу нормы в штатном режиме.
+        battery_current = min(MAX_CHARGE_CURRENT, battery_current)
+
         self.soc = min(100.0, max(0.0, self.soc + battery_current * dt * 0.35))
 
         return {

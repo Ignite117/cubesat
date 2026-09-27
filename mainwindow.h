@@ -91,6 +91,7 @@ private:
     void buildGpsTab();
 
     void updateViews();
+    void rescaleTemperatureAxis();
     void appendJournalRow(const QString &status, quint16 seq);
     void applyVisuals();
     void clearTabs();
