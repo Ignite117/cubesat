@@ -1,0 +1,12 @@
+# Сценарий: разряд батареи через все три состояния границ.
+# Пороги SOC заданы в limits.cpp: предупреждение ниже 30 %, авария ниже 15 %.
+# Одна строка — один кадр. Поля подставляются поверх сгенерированных.
+# "_repeat": N — держать это состояние N кадров, "_note" — печатается в консоль.
+# Запуск: python sat_sim.py --scenario scenarios/low_battery.jsonl
+{"_note": "норма: батарея заряжена, панели на свету", "eps.soc_percent": 87, "eps.battery_current": 0.31, "_repeat": 8}
+{"_note": "вошли в тень, пошёл разряд — SOC ещё в норме", "eps.soc_percent": 62, "eps.battery_current": -0.42, "eps.solar_power": [0,0,0,0,0,0,0,0,0,0,0,0], "_repeat": 6}
+{"_note": "SOC ниже 30 % — ПРЕДУПРЕЖДЕНИЕ, показания желтеют", "eps.soc_percent": 27, "eps.battery_current": -0.51, "eps.solar_power": [0,0,0,0,0,0,0,0,0,0,0,0], "_repeat": 8}
+{"_note": "SOC ниже 15 % — АВАРИЯ, показания краснеют", "eps.soc_percent": 12, "eps.battery_current": -0.55, "eps.solar_power": [0,0,0,0,0,0,0,0,0,0,0,0], "_repeat": 8}
+{"_note": "критический разряд: просело напряжение шин, борт ушёл в safe mode", "eps.soc_percent": 6, "eps.battery_voltage": 6.7, "eps.bus_voltage": [3.14, 4.78, 8.05], "eps.battery_current": -0.20, "obc.cpu_load_percent": 8, "obc.last_error_code": 34, "comm.tx_power_dbm": 16.2, "_repeat": 10}
+{"_note": "вышли на свет, заряд восстанавливается", "eps.soc_percent": 22, "eps.battery_current": 0.62, "eps.battery_voltage": 7.2, "obc.last_error_code": 0, "_repeat": 8}
+{"_note": "всё вернулось в норму", "eps.soc_percent": 41, "eps.battery_current": 0.55, "_repeat": 10}

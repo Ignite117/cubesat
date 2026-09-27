@@ -1,0 +1,12 @@
+# Сценарий: перегрев пятой солнечной панели и срыв терморегулирования.
+# Пороги из limits.cpp: панели — предупреждение выше 85 °C, авария выше 100 °C;
+# CPU — предупреждение выше 60 °C, авария выше 80 °C.
+# Индекс в квадратных скобках адресует элемент массива: temp_solar[4] — пятая панель.
+# Запуск: python sat_sim.py --scenario scenarios/panel_overheat.jsonl --rate 2
+{"_note": "норма", "_repeat": 10}
+{"_note": "панель 5 греется, но ещё в норме", "thermal.temp_solar[4]": 72.0, "_repeat": 6}
+{"_note": "панель 5 выше 85 °C — ПРЕДУПРЕЖДЕНИЕ на вкладке терморегулирования", "thermal.temp_solar[4]": 91.0, "eps.solar_power[4]": 3.1, "_repeat": 8}
+{"_note": "панель 5 выше 100 °C — АВАРИЯ, мощность панели просела", "thermal.temp_solar[4]": 104.0, "eps.solar_power[4]": 1.2, "thermal.temp_in": 38.0, "_repeat": 8}
+{"_note": "тепло пошло внутрь корпуса: CPU выше 60 °C, подскочила загрузка", "thermal.temp_solar[4]": 107.0, "thermal.temp_cpu": 71.0, "thermal.temp_in": 47.0, "obc.cpu_load_percent": 92, "obc.last_error_code": 17, "_repeat": 8}
+{"_note": "CPU выше 80 °C — АВАРИЯ сразу в двух подсистемах", "thermal.temp_solar[4]": 109.0, "thermal.temp_cpu": 84.0, "thermal.temp_in": 52.0, "obc.cpu_load_percent": 97, "obc.last_error_code": 17, "_repeat": 8}
+{"_note": "борт отключил панель 5, температуры падают", "thermal.temp_solar[4]": 44.0, "eps.solar_power[4]": 0.0, "thermal.temp_cpu": 34.0, "thermal.temp_in": 24.0, "obc.cpu_load_percent": 37, "obc.last_error_code": 0, "_repeat": 12}
